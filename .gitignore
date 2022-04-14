@@ -1,0 +1,8 @@
+# don't save copyrighted stuff
+www/
+# don't save our generated files, certificates, and stuff
+*.conf
+*.key
+*.pem
+*.srl
+*.csr
