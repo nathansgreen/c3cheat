@@ -2,7 +2,17 @@
 
 Grab a copy and self-host cookie clicker city. Change stuff. Cheat. Win.
 
+### save file editing
+
+The save file format is base-64 encoded. There appears to be a random 3
+byte prefix followed by delimited json blobs. Attempting to decode the
+save file without stripping off the prefix tends to create gibberish.
+
 ### example
+
+The file `data.json` contains a lot of stuff that is fairly easy to modify.
+Other game data is compiled into `c3runtime.js` but this can also be
+manipulated.
 
 The JSON path `/project/6/2/1/3/3` will land you at the `REFUND` section.
 One very, very easy thing to do is to change the multiplier from the

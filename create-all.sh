@@ -43,7 +43,7 @@ certs() {
 webserver() {
     [ -f nginx.conf ] || cat <<-EOF >nginx.conf
 		daemon off;
-		events { worker_connections 8; }  ## Default: 1024
+		events { worker_connections 16; }  ## Default: 1024
 		http { include ./mime.types;
 		server {
 		  listen     [::]:443 ssl;
