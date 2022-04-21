@@ -4,21 +4,37 @@
 # shellcheck disable=SC2039
 set -o errexit -o noclobber
 
+BUILDINGS="Cursor Grandma Farm Mine Factory Bank Temple WizardTower Shipment\
+ Alchemy Portal TimeMachine Antimatter Prism Chance Fractal Console Idleverse"
 CPS="0.1 1 8 47 260 1400 7800 44E3 26E4\
  16E5 1E7 65E6 43E7 29E8 21E9 15E10 11E11 83E11"
-EFFICIENCIES="1 2 4 8"
-efficiency="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+efficiency="1 1 1 1 1 1 1 1\
+ 1 1 1 1 1 1 1 1 1 1"
 
-seconds=123
-data="$(cat "$1")"
+seconds=$((60 * 60 * 24 * 1))
+if [ "${1:-x}" = "x" ]; then
+    data=$(while read -r a; do printf "%s\n" "$a"; done)
+else
+    data=$(cat "$1")
+fi
 
 vals() { sed -E 's/^.+\"data\"://; s/\}$//; s/\[|\]//g; s/,/ /g'; }
+
+multa() {
+    local a=$1
+    shift
+    [ "$a" = 1 ] && { printf "%s\n" "$*"; return; }
+    echo "$*" | awk 'BEGIN {RS=" "} {printf "%g ", ($1 * '"$a"')}';
+    printf "\n"
+}
 
 # extract values
 totals="$(echo "$data" | sed -n 1p | vals | sed 's/ /\\n/g')"
 play_time="$(echo "$totals" | sed -n 8p)"
 alltime_cookies="$(echo "$totals" | sed -n 9p)"
 cookies="$(echo "$totals" | sed -n 10p)"
+cps_mult=$(echo "$totals" | sed -n 22p)
+cps_boost=$(multa "$cps_mult" "$CPS")
 buildings="$(echo "$data" | sed -n '5p' | vals)"
 history="$(echo "$data" | sed -n '6p' | vals)"
 
@@ -50,10 +66,11 @@ sum_pairs() {
 
 sum() { echo "$@" | awk 'BEGIN {RS=" "} {S+=$1} END {printf "%.16f", S}'; }
 
-generated=$(gen "$seconds" "$buildings Z" "$CPS Z" | sed 's/\+//g')
+generated=$(gen "$seconds" "$buildings Z" "$cps_boost Z" | sed 's/\+//g')
 generated=$(gen 1 "$generated Z" "$efficiency")
+gen_tot=$(sum "$generated")
+#printf "%g\n" "$gen_tot" >&2
 gen_hist=$(sum_pairs "$history Z" "$generated Z")
-gen_tot=$(sum "$gen_hist")
 new_time=$(sum "$seconds $play_time")
 new_alltime=$(sum "$gen_tot $alltime_cookies")
 new_cookies=$(sum "$gen_tot $cookies")
