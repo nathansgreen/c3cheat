@@ -6,6 +6,8 @@ set -o errexit -o noclobber
 
 CPS="0.1 1 8 47 260 1400 7800 44E3 26E4\
  16E5 1E7 65E6 43E7 21E14 29E8 21E9 15E10 11E11 83E11"
+EFFICIENCIES="1 2 4 8"
+efficiency="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
 
 seconds=123
 data="$(cat "$1")"
@@ -22,11 +24,15 @@ history="$(echo "$data" | sed -n '6p' | vals)"
 
 
 gen() {
-    local s=$1 bldgs=$2 cps=$3 b c
-    while [ "$bldgs" != 'Z' ]; do
+    local sec=$1 bldgs=$2 cps=$3 b c
+    while [ "${bldgs# }" != 'Z' ]; do
         b="${bldgs%% *}"
         c="${cps%% *}"
-        echo | awk '{printf "%.16f ", ('"$b"' * '"$c"' * '"$s"')}'
+        if ! awk "BEGIN {if ($b<=0 || $sec<=0) exit 1}"; then
+            printf "%s " "$b"
+        else
+            awk 'BEGIN {printf "%.16f ", ('"$b"' * '"$c"' * '"$sec"')}'
+        fi
         bldgs="${bldgs#* }"
         cps=${cps#* }
     done
@@ -36,7 +42,7 @@ gen() {
 sum_pairs() {
     local hist=$1 gen=$2
     while [ "$hist" != 'Z' ]; do
-        echo | awk '{printf "%.16f ", ('"${hist%% *}"' + '"${gen%% *}"')}'
+        awk 'BEGIN {printf "%.16f ", ('"${hist%% *}"' + '"${gen%% *}"')}'
         hist="${hist#* }"
         gen="${gen#* }"
     done
@@ -45,9 +51,9 @@ sum_pairs() {
 sum() { echo "$@" | awk 'BEGIN {RS=" "} {S+=$1} END {printf "%.16f", S}'; }
 
 generated=$(gen "$seconds" "$buildings Z" "$CPS Z" | sed 's/\+//g')
+generated=$(gen 1 "$generated Z" "$efficiency")
 gen_hist=$(sum_pairs "$history Z" "$generated Z")
-# shellcheck disable=SC2086
-gen_tot=$(sum ${gen_hist})
+gen_tot=$(sum "$gen_hist")
 new_time=$(sum "$seconds $play_time")
 new_alltime=$(sum "$gen_tot $alltime_cookies")
 new_cookies=$(sum "$gen_tot $cookies")
