@@ -3,37 +3,19 @@
 set -o errexit -o noglob -o noclobber
 trap 's=$?; trap - EXIT; echo "generic error">&2; exit $s' EXIT TERM
 
-SUFFIXES="k M B T Qa Qi Sx Sp Oc No De UnD DuD TrD QaD QiD SeD SpD OcD"
-#suffixes="k M B T q Q s S O N D U"
-places="3 6 9 12 15 18 21 24 27 30 33 36 39 42 45 48 51 54 57"
-#digits="6 9 12 15 18 21 24 27 30 33 36 39 42 45 48 51 54 57 60"
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+source "$dir/../lib.sh"
+alias displ=fmt
 
-
-displ() {
-    local len=${#1} first p dig="0 $places" s=3 suf="_ $SUFFIXES"
-    if [ $len = '0' ]; then
-        echo 0
-    elif [ $len -lt 4 ]; then
-        printf "%s\n" "$1"
-    else
-        for p in $places Z; do
-            [ "$p" = 'Z' ] && { \
-                first=$(printf "%.1s" "$1")
-                printf "%s.%.2se%s\n" "$first" "${1#$first}" "$((len - 1))"
-                return 0; }
-            [ $len -le $p ] && { \
-                s=$((p - len))
-                p=$((3 - s))
-                first=$(printf "%.${p}s" "$1")
-                [ $p -gt 1 ] && p=1 || p=2
-                printf "%s.%.${p}s %s\n" "$first" "${1#$first}" "${suf%% *}"
-                return 0; }
-            s=$(printf "%.2s" "$dig")
-            dig=${dig#* }
-            suf=${suf#* }
-        done
-    fi
+show_suffixes() {
+    local a b aa="$suffixes Z" bb="$places Z"
+    while [ "${aa# }" != 'Z' ]; do
+        a="${aa%% *}"; b="${bb%% *}"
+        printf "1 %s = 1x10^%s\n" "$a" "$b"
+        aa="${aa#* }"; bb=${bb#* }
+    done
 }
+# show_suffixes
 
 check() {
     [ "$1" = "$2" ] || { echo "ERROR: $1 != $2" >&2; return 1; }
